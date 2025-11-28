@@ -17,6 +17,20 @@
       .cursor-blink {
         animation: blink 1s infinite;
       }
+      .speaking-pulse {
+        animation: pulse-green 2s infinite;
+      }
+      @keyframes pulse-green {
+        0% {
+          box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+        }
+      }
     </style>
   </head>
   <body class="bg-gray-100 p-4 flex items-center justify-center min-h-[400px]">
@@ -26,7 +40,6 @@
       <div
         class="bg-slate-900 text-white p-4 flex justify-between items-center">
         <div class="flex items-center gap-2">
-          <!-- Icon -->
           <svg
             class="w-5 h-5 text-blue-400"
             fill="none"
@@ -38,12 +51,13 @@
               stroke-width="2"
               d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
           </svg>
-          <span class="font-bold">AI 자막 테스트</span>
+          <span class="font-bold"> AI 자막 테스트</span>
         </div>
+        <!-- Status Badge (Updated Logic) -->
         <div
           id="status-badge"
-          class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300">
-          대기 중
+          class="text-xs font-bold bg-slate-700 px-3 py-1 rounded-full text-slate-300 transition-all duration-300 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-gray-400"></span> 준비 완료
         </div>
       </div>
 
@@ -53,7 +67,7 @@
           <button
             id="btn-word"
             onclick="setMode('WORD')"
-            class="p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700">
+            class="p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-200 ring-offset-1">
             <span>WORD 모드</span>
             <span class="text-[10px] font-normal opacity-70"
               >타자 치듯 출력</span
@@ -85,7 +99,9 @@
             <p
               id="display-text"
               class="text-lg font-medium text-gray-800 leading-relaxed">
-              <span class="text-gray-400 text-sm">아래 버튼을 눌러보세요</span>
+              <span class="text-gray-400 text-sm"
+                >아래 [시뮬레이션 시작] 버튼을 눌러주세요</span
+              >
             </p>
           </div>
         </div>
@@ -117,36 +133,41 @@
         if (isAnimating) return;
         currentMode = mode;
 
-        // Update UI styles
         if (mode === "WORD") {
           btnWord.className =
-            "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700";
+            "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-200 ring-offset-1";
           btnText.className =
             "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-gray-200 text-gray-400 hover:border-gray-300";
           progressBar.className =
             "h-full bg-blue-500 transition-all duration-100";
           actionBtn.className =
             "w-full py-4 rounded-xl font-bold text-white shadow-md transition-transform active:scale-95 bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2";
-          statusBadge.innerText = "실시간 스트리밍 모드";
         } else {
           btnWord.className =
             "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-gray-200 text-gray-400 hover:border-gray-300";
           btnText.className =
-            "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-purple-500 bg-purple-50 text-purple-700";
+            "p-3 rounded-lg border-2 text-sm font-bold transition-all flex flex-col items-center gap-2 border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-200 ring-offset-1";
           progressBar.className =
             "h-full bg-purple-500 transition-all duration-100";
           actionBtn.className =
             "w-full py-4 rounded-xl font-bold text-white shadow-md transition-transform active:scale-95 bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2";
-          statusBadge.innerText = "메시지 수신 모드";
         }
       }
 
       function startSimulation() {
         if (isAnimating) return;
         isAnimating = true;
+
+        // Update Button State
         actionBtn.disabled = true;
-        actionBtn.innerText = "처리 중...";
+        actionBtn.innerText = "AI 답변 생성 중...";
         actionBtn.classList.add("opacity-75", "cursor-not-allowed");
+
+        // Update Status Badge (Visual Feedback)
+        statusBadge.className =
+          "text-xs font-bold bg-green-600 px-3 py-1 rounded-full text-white transition-all duration-300 flex items-center gap-1 shadow-lg";
+        statusBadge.innerHTML =
+          '<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span> AI 답변 중...';
 
         displayText.innerText = "";
         progressBar.style.width = "0%";
@@ -164,10 +185,10 @@
               progressBar.style.width = (i / chars.length) * 100 + "%";
             } else {
               clearInterval(interval);
-              displayText.innerHTML = fullText; // Remove cursor
+              displayText.innerHTML = fullText;
               finishAnimation();
             }
-          }, 50);
+          }, 80);
         } else {
           // TEXT Mode Logic
           displayText.innerHTML =
@@ -190,8 +211,14 @@
       function finishAnimation() {
         isAnimating = false;
         actionBtn.disabled = false;
-        actionBtn.innerText = "시뮬레이션 다시 시작";
+        actionBtn.innerText = "다시 시작하기";
         actionBtn.classList.remove("opacity-75", "cursor-not-allowed");
+
+        // Revert Status Badge
+        statusBadge.className =
+          "text-xs font-bold bg-slate-700 px-3 py-1 rounded-full text-slate-300 transition-all duration-300 flex items-center gap-1";
+        statusBadge.innerHTML =
+          '<span class="w-2 h-2 rounded-full bg-gray-400"></span> 답변 완료';
       }
     </script>
   </body>
